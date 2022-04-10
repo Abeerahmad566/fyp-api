@@ -1,0 +1,8 @@
+{
+  "db": "mongodb+srv://abeer:abeer@cluster0.xb4hm.mongodb.net/FYP?retryWrites=true&w=majority",
+  "jwtPrivateKey": "jwtPrivateKey",
+    "myenvironment":"Production",
+    "EMAIL_SERVICE" : "gmail",
+    "EMAIL_ADDRESS ": "loanprediction123@gmail.com ",
+    "EMAIL_PASSWORD" : "abeerahmad123" 
+  }
