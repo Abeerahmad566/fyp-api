@@ -5,6 +5,9 @@
   "scripts": {
     "start": "nodemon ./bin/www"
   },
+  "engines":{
+    "node":"14.x"
+  },
   "dependencies": {
     "@hapi/joi": "^15.0.3",
     "axios": "^0.26.1",
