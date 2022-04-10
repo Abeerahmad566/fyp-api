@@ -30,7 +30,7 @@ userSchema.pre('save', async function (next) {
 userSchema.methods.generateToken = function () {
   return jwt.sign(
     { _id: this._id, name: this.name},
-    config.get("jwtPrivateKey")
+    process.env.JWT_KEY
   );
 };
 
