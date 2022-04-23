@@ -29,9 +29,10 @@ router.post('/register',  async (req, res) => {
   await user.save();
   //const { password, ...info } = user._doc;
   let datatoRetuen = {
-    name: user.name,
+    firstname: user.firstname,
+    lastname: user.lastname,
     email: user.email,
-    phone: user.phone,
+    phonenumber: user.phonenumber,
     accessToken: accessToken,
   };
   res.status(200).json(datatoRetuen);
