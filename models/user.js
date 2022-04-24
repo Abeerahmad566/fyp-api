@@ -29,7 +29,7 @@ userSchema.pre('save', async function (next) {
 //generate the token
 userSchema.methods.generateToken = function () {
   return jwt.sign(
-    { _id: this._id, name: this.name},
+    { _id: this._id, firstname: this.firstname},
     process.env.JWT_KEY
   );
 };

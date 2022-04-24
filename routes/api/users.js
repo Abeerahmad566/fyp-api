@@ -8,9 +8,25 @@ const config = require("config");
 const crypto = require('crypto');
 const sendEmail = require("./sendemail")
 const { response } = require("../../app");
-router.get("/",async (req, res) => {
+router.put("/updateprofile/:id",  async (req, res) => {
+  let user = await User.findById(req.params.id);
+  user.firstname = req.body.firstname;
+  user.lastname= req.body.lastname
+  user.phonenumber = req.body.phonenumber;
+  user.password=req.body.password;
+  await user.save();
+  return res.send(user);
+});
+// router.put("/updatepassword/:id",async (req,res)=>{
+//   let user = await User.findById(req.params.id);
+
+//   await user.save();
+//   return res.send(user);
+// });
+
+router.get("/:id",async (req, res) => {
   console.log(req.user);
-  let users = await User.find();
+  let users = await User.find({_id:req.params.id});
   return res.send(users);
 });
 router.post('/register',  async (req, res) => {
@@ -27,7 +43,6 @@ router.post('/register',  async (req, res) => {
     (user.password = req.body.password);
   let accessToken = user.generateToken(); //----->Genrate Token
   await user.save();
-  //const { password, ...info } = user._doc;
   let datatoRetuen = {
     firstname: user.firstname,
     lastname: user.lastname,
@@ -43,7 +58,7 @@ router.post("/login", async (req, res) => {
   let isValid = await bcrypt.compare(req.body.password, user.password);
   if (!isValid) return res.status(401).send("Invalid Password");
   let token = jwt.sign(
-    { _id: user._id, email: user.email, name: user.firstname },
+    { _id: user._id, email: user.email, firstname: user.firstname,lastname:user.lastname,phonenumber:user.phonenumber },
     config.get("jwtPrivateKey")
   );
   res.send(token);
@@ -118,7 +133,7 @@ router.put('/passwordreset/:resetToken', async (req, res) => {
     res.status(201).json({
       success: true,
       data: 'Password Updated Success',
-      //token: user.generateToken(),
+     
     });
   } catch (error) {
     console.log(error);

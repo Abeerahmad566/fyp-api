@@ -5,13 +5,13 @@ const axios = require("axios");
 var FormData = require('form-data');
 const {Information} = require("../../models/information");
 //get information
-router.get("/:id",async (req, res) => {
-  let informations = await Information.find({userid:req.params.id});
-  if(informations)
-  return res.send(informations);
-  else
-  res.send("No info");
-});
+  router.get("/:id",async (req, res) => {
+    let informations = await Information.find({userid:req.params.id});
+    if(informations)
+    return res.send(informations);
+    else
+    res.send("No info");
+  });
 
 
 
