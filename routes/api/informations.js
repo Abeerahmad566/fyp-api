@@ -12,9 +12,11 @@ const {Information} = require("../../models/information");
     else
     res.send("No info");
   });
-
-
-
+  //delete information
+  router.delete("/:id" , async (req, res) => {
+    let information = await Information.findByIdAndDelete(req.params.id);
+    return res.send(information);
+  });
 //Insert a record
 router.post("/", async (req, res) => {
   let information = new Information();

@@ -10,27 +10,40 @@ const sendEmail = require("./sendemail")
 const { response } = require("../../app");
 router.put("/updateprofile/:id",  async (req, res) => {
   let user = await User.findById(req.params.id);
-  user.firstname = req.body.firstname;
-  user.lastname= req.body.lastname
-  user.phonenumber = req.body.phonenumber;
+  if(user){
+  user.firstname = req.body.firstname || user.firstname;
+  user.lastname= req.body.lastname||user.lastname;
+  user.phonenumber = req.body.phonenumber||user.phonenumber ;
+  
+
+  await user.save();
+  return res.send(user);
+}
+else{
+  res.status(404)
+  throw new Error('user not found')
+}
+});
+router.put("/updatepassword/:id",async (req,res)=>{
+  let user = await User.findById(req.params.id);
+  if(user){
   user.password=req.body.password;
   await user.save();
   return res.send(user);
+  }
+  else
+  {
+    res.status(404)
+    throw new Error('user not found')
+  }
 });
-// router.put("/updatepassword/:id",async (req,res)=>{
-//   let user = await User.findById(req.params.id);
-
-//   await user.save();
-//   return res.send(user);
-// });
 
 router.get("/:id",async (req, res) => {
-  console.log(req.user);
   let users = await User.find({_id:req.params.id});
   return res.send(users);
 });
 router.post('/register',  async (req, res) => {
-  console.log(req.body);
+ x  
 
   let user = await User.findOne({ email: req.body.email });
   if (user)
@@ -58,7 +71,7 @@ router.post("/login", async (req, res) => {
   let isValid = await bcrypt.compare(req.body.password, user.password);
   if (!isValid) return res.status(401).send("Invalid Password");
   let token = jwt.sign(
-    { _id: user._id, email: user.email, firstname: user.firstname,lastname:user.lastname,phonenumber:user.phonenumber },
+    { _id: user._id},
     config.get("jwtPrivateKey")
   );
   res.send(token);
