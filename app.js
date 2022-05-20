@@ -44,10 +44,15 @@ app.use(function (err, req, res, next) {
   res.render("error");
 });
 mongoose
-  .connect(config.get("db"), {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
+  .connect(
+    config.get(
+      "mongodb+srv://Abeer:abeer@cluster0.hpwdt.mongodb.net/FYP?retryWrites=true&w=majority"
+    ),
+    {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    }
+  )
   .then(() => console.log("Connected to Mongo...."))
   .catch((error) => console.log(error.message));
 module.exports = app;
