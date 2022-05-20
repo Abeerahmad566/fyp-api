@@ -93,7 +93,7 @@ router.post("/register", upload.single("photo"), async (req, res) => {
   user.email = req.body.email;
   user.phonenumber = req.body.phonenumber;
   user.password = req.body.password;
-  user.photo = req.file.path;
+  req.file ? (user.photo = req.file.path) : (user.photo = "");
   let accessToken = user.generateToken(); //----->Genrate Token
   await user.save();
   let datatoRetuen = {
