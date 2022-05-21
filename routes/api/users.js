@@ -128,7 +128,7 @@ router.post("/forgetpassword", async (req, res) => {
 
   await user.save();
 
-  const resetPasswordUrl = `http://localhost:3000/passwordreset/${resetToken}`;
+  const resetPasswordUrl = `https://loanpredictionclient.netlify.app/passwordreset/${resetToken}`;
 
   const message = `
      <h1>You have requested a password reset</h1>
