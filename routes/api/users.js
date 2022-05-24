@@ -111,7 +111,15 @@ router.post("/login", async (req, res) => {
     return res.status(400).send("User With given Email is not Registered");
   let isValid = await bcrypt.compare(req.body.password, user.password);
   if (!isValid) return res.status(401).send("Invalid Password");
-  let token = jwt.sign({ _id: user._id }, config.get("jwtPrivateKey"));
+  let token = jwt.sign(
+    {
+      _id: user._id,
+      firstname: user.firstname,
+      lastname: user.lastname,
+      email: user.email,
+    },
+    config.get("jwtPrivateKey")
+  );
   res.send(token);
 });
 
