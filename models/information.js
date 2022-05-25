@@ -26,7 +26,7 @@ var informationSchema = mongoose.Schema({
   billsphoto: {
     type: Array,
   },
-  amount: Number,
+  loanamount: Number,
 });
 var Information = mongoose.model("Information", informationSchema);
 function validateinformation(data) {
@@ -45,7 +45,7 @@ function validateinformation(data) {
     designation: joi.string.min(3).required(),
     orgranizationname: joi.string.min(3).required(),
     organizationaddress: joi.string.min(10).required(),
-    amount: joi.Number.min(5).max(6).required(),
+    loanamount: joi.Number.min(5).max(6).required(),
   });
   return schema.validate(data, { abortEarly: false });
 }

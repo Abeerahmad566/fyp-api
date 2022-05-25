@@ -91,7 +91,7 @@ router.post("/", upload.array("billsphoto", 10), async (req, res) => {
   information.address = req.body.address;
   information.amount = req.body.amount;
   information.billsphoto = reqFiles;
-  information.amount = req.body.amount;
+  information.loanamount = req.body.loanamount;
   information.result = req.body.result;
 
   await information.save();
