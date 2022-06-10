@@ -13,6 +13,7 @@ var userSchema = mongoose.Schema(
     photo: {
       type: String,
     },
+    role: String,
     resetPasswordToken: String,
     resetPasswordExpire: Date,
   },

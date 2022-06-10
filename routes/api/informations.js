@@ -33,10 +33,79 @@ const upload = multer({
   },
   fileFilter: fileFilter,
 });
+router.get("/stats", async (req, res) => {
+  const today = new Date();
+  const latYear = today.setFullYear(today.setFullYear() - 1);
 
+  try {
+    const data = await Information.aggregate([
+      {
+        $project: {
+          month: { $month: "$createdAt" },
+        },
+      },
+      {
+        $group: {
+          _id: "$month",
+          total: { $sum: 1 },
+        },
+      },
+    ]);
+    res.status(200).json(data);
+  } catch (err) {
+    res.status(500).json(err);
+  }
+});
+router.get("/get/totalprediction", async (req, res) => {
+  try {
+    var count = 0;
+    let informations = await Information.find();
+    const total = informations;
+    count = total.length;
+
+    return res.status(200).json(count);
+  } catch (err) {
+    return res.status(500).json("Internal Server Error");
+  }
+});
+router.get("/get/totalApproved", async (req, res) => {
+  try {
+    var count = 0;
+    let informations = await Information.find({ result: "Approved" });
+    const total = informations;
+    count = total.length;
+
+    return res.status(200).json(count);
+  } catch (err) {
+    return res.status(500).json("Internal Server Error");
+  }
+});
+router.get("/get/totalRejected", async (req, res) => {
+  try {
+    var count = 0;
+    let informations = await Information.find({ result: "Rejected" });
+    const total = informations;
+    count = total.length;
+
+    return res.status(200).json(count);
+  } catch (err) {
+    return res.status(500).json("Internal Server Error");
+  }
+});
+router.get("/pendingloandata", async (req, res) => {
+  let informations = await Information.find({ status: "Pending" });
+  return res.send(informations);
+});
+router.get("/", async (req, res) => {
+  let informations = await Information.find();
+  return res.send(informations);
+});
 //get information
 router.get("/:id", async (req, res) => {
-  let informations = await Information.find({ userid: req.params.id });
+  let informations = await Information.find({
+    userid: req.params.id,
+    result: "Approved" || "Rejected",
+  });
   if (informations) return res.send(informations);
   else res.send("No info");
 });
@@ -47,7 +116,13 @@ router.delete("/:id", async (req, res) => {
 });
 //Insert a record'
 
-router.post("/uploadcnic", upload.array("cnicphoto", 2), async (req, res) => {
+router.get("/getuserspictures/:id", async (req, res) => {
+  let informations = await Information.findById(req.params.id);
+  if (informations) return res.send(informations);
+  else res.send("No info");
+});
+
+router.post("/", upload.array("photo", 10), async (req, res) => {
   const reqFiles = [];
   const url = req.protocol + "://" + req.get("host");
 
@@ -56,28 +131,9 @@ router.post("/uploadcnic", upload.array("cnicphoto", 2), async (req, res) => {
   }
   let information = new Information();
   information.userid = req.body.userid;
-  information.cnicphoto = reqFiles;
-  await information.save();
-  return res.send(information);
-});
-
-router.post("/uploadcard", upload.single("cardphoto"), async (req, res) => {
-  let information = new Information();
-  information.userid = req.body.userid;
-  information.cardphoto = req.file.path;
-  await information.save();
-  return res.send(information);
-});
-
-router.post("/", upload.array("billsphoto", 10), async (req, res) => {
-  const reqFiles = [];
-  const url = req.protocol + "://" + req.get("host");
-
-  for (var i = 0; i < req.files.length; i++) {
-    reqFiles.push(url + "/images/" + req.files[i].filename);
-  }
-  let information = new Information();
-  information.userid = req.body.userid;
+  information.firstname = req.body.firstname;
+  information.lastname = req.body.lastname;
+  information.email = req.body.email;
   information.age = req.body.age;
   information.income = req.body.income;
   information.carownership = req.body.carownership;
@@ -90,14 +146,27 @@ router.post("/", upload.array("billsphoto", 10), async (req, res) => {
   information.cnic = req.body.cnic;
   information.address = req.body.address;
   information.amount = req.body.amount;
-  information.billsphoto = reqFiles;
+  information.photo = reqFiles;
   information.loanamount = req.body.loanamount;
   information.result = req.body.result;
-
+  information.status = req.body.status;
+  information.userRole = req.body.userRole;
   await information.save();
   return res.send(information);
 });
+router.put("/updatestatus/:id", async (req, res) => {
+  console.log(req.params);
+  let information = await Information.findOne({ _id: req.params.id });
 
+  try {
+    information.status = req.body.status || information.status;
+    await information.save();
+    return res.send(information);
+  } catch (error) {
+    console.log(error);
+    res.send(error);
+  }
+});
 router.post("/predict", async (req, res) => {
   await axios
     .post("https://mlmodel-flask.herokuapp.com/predict", req.body)
