@@ -159,6 +159,7 @@ router.put("/updatestatus/:id", async (req, res) => {
   let information = await Information.findOne({ _id: req.params.id });
 
   try {
+    console.log(req.body);
     information.status = req.body.status || information.status;
     await information.save();
     return res.send(information);
