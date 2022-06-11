@@ -1,6 +1,8 @@
 const express = require("express");
 const mongoose = require("mongoose");
-const cloudinary = require("./cloudinary");
+const cloudinary = require("cloudinary").v2;
+var dotenv = require("dotenv");
+dotenv.config();
 let router = express.Router();
 let { User } = require("../../models/user");
 var bcrypt = require("bcryptjs");
@@ -11,7 +13,11 @@ const crypto = require("crypto");
 const sendEmail = require("./sendemail");
 const multer = require("multer");
 var path = require("path");
-
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 // const storage = multer.diskStorage({
 //   destination: function (req, file, cb) {
 //     cb(null, "./images/");
