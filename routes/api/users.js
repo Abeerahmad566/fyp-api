@@ -1,4 +1,6 @@
 const express = require("express");
+const mongoose = require("mongoose");
+const cloudinary = require("./cloudinary");
 let router = express.Router();
 let { User } = require("../../models/user");
 var bcrypt = require("bcryptjs");
@@ -11,31 +13,31 @@ const { response } = require("../../app");
 const multer = require("multer");
 var path = require("path");
 
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, "./images/");
-  },
-  filename: function (req, file, cb) {
-    cb(null, file.originalname);
-  },
-});
+// const storage = multer.diskStorage({
+//   destination: function (req, file, cb) {
+//     cb(null, "./images/");
+//   },
+//   filename: function (req, file, cb) {
+//     cb(null, file.originalname);
+//   },
+// });
 
-const fileFilter = (req, file, cb) => {
-  // reject a file
-  if (file.mimetype === "image/jpeg" || file.mimetype === "image/png") {
-    cb(null, true);
-  } else {
-    cb(null, false);
-  }
-};
+// const fileFilter = (req, file, cb) => {
+//   // reject a file
+//   if (file.mimetype === "image/jpeg" || file.mimetype === "image/png") {
+//     cb(null, true);
+//   } else {
+//     cb(null, false);
+//   }
+// };
 
-const upload = multer({
-  storage: storage,
-  limits: {
-    fileSize: 1024 * 1024 * 5,
-  },
-  fileFilter: fileFilter,
-});
+// const upload = multer({
+//   storage: storage,
+//   limits: {
+//     fileSize: 1024 * 1024 * 5,
+//   },
+//   fileFilter: fileFilter,
+// });
 // router.get("/get/totalusers", async (req, res) => {
 //   try {
 //     var count = 0;
@@ -71,6 +73,33 @@ const upload = multer({
 //     res.status(500).json(err);
 //   }
 // });
+
+const storage = multer.diskStorage({
+  // destination: (req, file, cb) => {
+  //   cb(null, './public');
+  // },
+  filename: (req, file, cb) => {
+    const fileName = file.originalname.toLowerCase().split(" ").join("-");
+    cb(null, mongoose.Types.ObjectId() + "-" + fileName);
+    //cb(null, file.originalname);
+  },
+});
+var upload = multer({
+  storage: storage,
+  fileFilter: (req, file, cb) => {
+    if (
+      file.mimetype == "image/png" ||
+      file.mimetype == "image/jpg" ||
+      file.mimetype == "image/jpeg"
+    ) {
+      cb(null, true);
+    } else {
+      cb(null, false);
+      return cb(new Error("Only .png, .jpg and .jpeg format allowed!"));
+    }
+  },
+});
+
 router.get("/users", async (req, res) => {
   let users = await User.find({ role: "user" });
   return res.send(users);
@@ -91,9 +120,10 @@ router.put(
   "/updateprofileimg/:id",
   upload.single("photo"),
   async (req, res) => {
+    const result = await cloudinary.uploader.upload(req.file.path);
     let user = await User.findById(req.params.id);
     if (user) {
-      user.photo = req.file.path;
+      user.photo = result.secure_url;
       await user.save();
       return res.send(user);
     } else {
@@ -137,6 +167,7 @@ router.post("/register", upload.single("photo"), async (req, res) => {
   let user = await User.findOne({ email: req.body.email });
   if (user)
     return res.status(400).json("User with Given Email Already Exsist ");
+  const result = await cloudinary.uploader.upload(req.file.path);
   user = new User();
   user.firstname = req.body.firstname;
   user.lastname = req.body.lastname;
@@ -144,7 +175,8 @@ router.post("/register", upload.single("photo"), async (req, res) => {
   user.phonenumber = req.body.phonenumber;
   user.password = req.body.password;
   req.body.role ? (user.role = req.body.role) : (user.role = "user");
-  req.file ? (user.photo = req.file.path) : (user.photo = "");
+  req.file ? (user.photo = result.secure_url) : (user.photo = "");
+  user.cloudinary_id = result.public_id;
   let accessToken = user.generateToken(); //----->Genrate Token
   await user.save();
   let datatoRetuen = {

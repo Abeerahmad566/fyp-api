@@ -1,6 +1,8 @@
 const express = require("express");
 let router = express.Router();
 const auth = require("../../middleWares/auth");
+const mongoose = require("mongoose");
+const cloudinary = require("./cloudinary");
 const axios = require("axios");
 var FormData = require("form-data");
 const { Information } = require("../../models/information");
@@ -8,30 +10,56 @@ const multer = require("multer");
 var path = require("path");
 const { info } = require("console");
 
+// const storage = multer.diskStorage({
+//   destination: function (req, file, cb) {
+//     cb(null, "./images/");
+//   },
+//   filename: function (req, file, cb) {
+//     cb(null, file.originalname);
+//   },
+// });
+
+// const fileFilter = (req, file, cb) => {
+//   // reject a file
+//   if (file.mimetype === "image/jpeg" || file.mimetype === "image/png") {
+//     cb(null, true);
+//   } else {
+//     cb(null, false);
+//   }
+// };
+
+// const upload = multer({
+//   storage: storage,
+//   limits: {
+//     fileSize: 1024 * 1024 * 5,
+//   },
+//   fileFilter: fileFilter,
+// });
+
 const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, "./images/");
-  },
-  filename: function (req, file, cb) {
-    cb(null, file.originalname);
+  // destination: (req, file, cb) => {
+  //   cb(null, './public');
+  // },
+  filename: (req, file, cb) => {
+    const fileName = file.originalname.toLowerCase().split(" ").join("-");
+    cb(null, mongoose.Types.ObjectId() + "-" + fileName);
+    //cb(null, file.originalname);
   },
 });
-
-const fileFilter = (req, file, cb) => {
-  // reject a file
-  if (file.mimetype === "image/jpeg" || file.mimetype === "image/png") {
-    cb(null, true);
-  } else {
-    cb(null, false);
-  }
-};
-
-const upload = multer({
+var upload = multer({
   storage: storage,
-  limits: {
-    fileSize: 1024 * 1024 * 5,
+  fileFilter: (req, file, cb) => {
+    if (
+      file.mimetype == "image/png" ||
+      file.mimetype == "image/jpg" ||
+      file.mimetype == "image/jpeg"
+    ) {
+      cb(null, true);
+    } else {
+      cb(null, false);
+      return cb(new Error("Only .png, .jpg and .jpeg format allowed!"));
+    }
   },
-  fileFilter: fileFilter,
 });
 router.get("/stats", async (req, res) => {
   const today = new Date();

@@ -19,6 +19,15 @@ var informationSchema = mongoose.Schema(
     photo: {
       type: Array,
     },
+    cloudinary_id: {
+      type: Array,
+    },
+    comments: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Comment",
+      },
+    ],
     address: String,
     cnic: String,
     designation: String,

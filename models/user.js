@@ -13,6 +13,15 @@ var userSchema = mongoose.Schema(
     photo: {
       type: String,
     },
+    cloudinary_id: {
+      type: String,
+    },
+    comments: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Comment",
+      },
+    ],
     role: String,
     resetPasswordToken: String,
     resetPasswordExpire: Date,
