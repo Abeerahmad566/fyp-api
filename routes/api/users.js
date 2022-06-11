@@ -9,7 +9,6 @@ const jwt = require("jsonwebtoken");
 const config = require("config");
 const crypto = require("crypto");
 const sendEmail = require("./sendemail");
-const { response } = require("../../app");
 const multer = require("multer");
 var path = require("path");
 
