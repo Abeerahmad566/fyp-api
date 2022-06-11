@@ -2,7 +2,6 @@ const express = require("express");
 let router = express.Router();
 const auth = require("../../middleWares/auth");
 const mongoose = require("mongoose");
-const cloudinary = require("./cloudinary");
 const axios = require("axios");
 var FormData = require("form-data");
 const { Information } = require("../../models/information");
