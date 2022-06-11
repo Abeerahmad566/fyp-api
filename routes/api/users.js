@@ -1,8 +1,6 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const cloudinary = require("cloudinary").v2;
-var dotenv = require("dotenv");
-dotenv.config();
 let router = express.Router();
 let { User } = require("../../models/user");
 var bcrypt = require("bcryptjs");
@@ -12,7 +10,8 @@ const config = require("config");
 const crypto = require("crypto");
 const sendEmail = require("./sendemail");
 const multer = require("multer");
-var path = require("path");
+var dotenv = require("dotenv");
+dotenv.config();
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
@@ -170,9 +169,9 @@ router.get("/:id", async (req, res) => {
 });
 router.post("/register", upload.single("photo"), async (req, res) => {
   let user = await User.findOne({ email: req.body.email });
-  if (user)
-    return res.status(400).json("User with Given Email Already Exsist ");
+  if (user) return res.status(400).json("User with Given Email Already Exist ");
   const result = await cloudinary.uploader.upload(req.file.path);
+
   user = new User();
   user.firstname = req.body.firstname;
   user.lastname = req.body.lastname;
@@ -180,19 +179,14 @@ router.post("/register", upload.single("photo"), async (req, res) => {
   user.phonenumber = req.body.phonenumber;
   user.password = req.body.password;
   req.body.role ? (user.role = req.body.role) : (user.role = "user");
-  req.file ? (user.photo = result.secure_url) : (user.photo = "");
+  user.photo = result.secure_url;
   user.cloudinary_id = result.public_id;
   let accessToken = user.generateToken(); //----->Genrate Token
-  await user.save();
-  let datatoRetuen = {
-    firstname: user.firstname,
-    lastname: user.lastname,
-    email: user.email,
-    phonenumber: user.phonenumber,
-    role: user.role,
+  let datatoreturn = {
     accessToken: accessToken,
   };
-  res.status(200).json(datatoRetuen);
+  await user.save();
+  res.status(200).json(datatoreturn);
 });
 router.post("/login", async (req, res) => {
   let user = await User.findOne({ email: req.body.email });

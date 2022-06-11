@@ -20,7 +20,7 @@ var informationSchema = mongoose.Schema(
       type: Array,
     },
     cloudinary_id: {
-      type: Array,
+      type: String,
     },
     comments: [
       {

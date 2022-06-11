@@ -3,12 +3,18 @@ let router = express.Router();
 const auth = require("../../middleWares/auth");
 const mongoose = require("mongoose");
 const axios = require("axios");
-var FormData = require("form-data");
 const { Information } = require("../../models/information");
 const multer = require("multer");
 var path = require("path");
 const { info } = require("console");
-
+const cloudinary = require("cloudinary").v2;
+var dotenv = require("dotenv");
+dotenv.config();
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 // const storage = multer.diskStorage({
 //   destination: function (req, file, cb) {
 //     cb(null, "./images/");
@@ -148,15 +154,29 @@ router.get("/getuserspictures/:id", async (req, res) => {
   if (informations) return res.send(informations);
   else res.send("No info");
 });
+const cloudinaryImageUploadMethod = async (file) => {
+  return new Promise((resolve) => {
+    cloudinary.uploader.upload(file, (err, res) => {
+      if (err) return res.status(500).send("upload image error");
+      resolve({
+        res: res.secure_url,
+      });
+    });
+  });
+};
 
 router.post("/", upload.array("photo", 10), async (req, res) => {
-  const reqFiles = [];
-  const url = req.protocol + "://" + req.get("host");
-
-  for (var i = 0; i < req.files.length; i++) {
-    reqFiles.push(url + "/images/" + req.files[i].filename);
-  }
   let information = new Information();
+  const urls = [];
+  const files = req.files;
+  for (const file of files) {
+    const { path } = file;
+    const newPath = await cloudinaryImageUploadMethod(path);
+    urls.push(newPath);
+    information.photo = urls.map((url) => url.res);
+    information.cloudinary_id = newPath.public_id;
+  }
+
   information.userid = req.body.userid;
   information.firstname = req.body.firstname;
   information.lastname = req.body.lastname;
@@ -173,7 +193,7 @@ router.post("/", upload.array("photo", 10), async (req, res) => {
   information.cnic = req.body.cnic;
   information.address = req.body.address;
   information.amount = req.body.amount;
-  information.photo = reqFiles;
+
   information.loanamount = req.body.loanamount;
   information.result = req.body.result;
   information.status = req.body.status;
