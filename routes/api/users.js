@@ -155,6 +155,9 @@ router.put("/updateprofile/:id", async (req, res) => {
 router.put("/updatepassword/:id", async (req, res) => {
   let user = await User.findById(req.params.id);
   if (user) {
+    let isValid = await bcrypt.compare(req.body.oldpassword, user.password);
+    if (!isValid) return res.status(401).send("Invalid old Password");
+    console.log(req.body);
     user.password = req.body.password;
     await user.save();
     return res.send(user);
@@ -218,7 +221,7 @@ router.post("/forgetpassword", async (req, res) => {
   const user = await User.findOne({ email: req.body.email });
 
   if (!user) {
-    return res.status(404).json("User Not Exsist");
+    return res.status(404).json("User Not Exist");
   }
 
   // Get ResetPassword Token
@@ -226,7 +229,7 @@ router.post("/forgetpassword", async (req, res) => {
 
   await user.save();
 
-  const resetPasswordUrl = `https://loanpredictionclient.netlify.app/passwordreset/${resetToken}`;
+  const resetPasswordUrl = `http://localhost:3000/passwordreset/${resetToken}`;
 
   const message = `
      <h1>You have requested a password reset</h1>
@@ -287,9 +290,9 @@ router.put("/passwordreset/:resetToken", async (req, res) => {
     console.log(error);
   }
 });
-// router.post('/sendotp', async (req, res) => {
+// router.post("/sendotp", async (req, res) => {
 //   const user = await User.findOne({ email: req.body.email });
-//   if (!user) return res.status(400).json('User Not Registered');
+//   if (!user) return res.status(400).json("User Not Registered");
 //   else {
 //     //If user Exsist then send Otp to that user
 //     let OTP = Math.floor(Math.random() * 10000 + 1).toString();
@@ -320,8 +323,32 @@ router.put("/passwordreset/:resetToken", async (req, res) => {
 //         message: `Email sent to ${user.email} successfully`,
 //       });
 //     } catch (error) {
-//       return res.status(500).json(' Email Could Not be  Send');
+//       return res.status(500).json(" Email Could Not be  Send");
 //     }
+//   }
+// });
+// router.put("/resetpassword/:id", async (req, res) => {
+//   const user = await User.findById(req.params.id);
+//   console.log(user);
+//   if (user) {
+//     let nowTime = new Date();
+//     if (nowTime > user.otpExpiry) {
+//       if (req.body.otp == user.otp) {
+//         let salt = await bcrypt.genSalt(10);
+//         let resetPassword = await bcrypt.hash(req.body.password, salt);
+//         await User.findByIdAndUpdate(user._id, {
+//           password: resetPassword,
+//           otpExpiry: nowTime,
+//         });
+//         res.status(200).json("Password Reset Successfully");
+//       } else {
+//         res.status(400).json("OTP is Invalid");
+//       }
+//     } else {
+//       res.status(400).json("OTP is Expired");
+//     }
+//   } else {
+//     res.status(400).json("User Not Found");
 //   }
 // });
 module.exports = router;

@@ -1,11 +1,10 @@
-const nodemailer = require('nodemailer');
+const nodemailer = require("nodemailer");
 
 const sendEmail = (options) => {
   const transporter = nodemailer.createTransport({
-   
     service: process.env.EMAIL_SERVICE,
     port: 587,
-  secure: false,
+    secure: false,
     auth: {
       user: process.env.EMAIL_ADDRESS,
       pass: process.env.EMAIL_PASSWORD,
@@ -21,12 +20,11 @@ const sendEmail = (options) => {
 
   transporter.sendMail(mailOptions, function (err, info) {
     if (err) {
-      console.log('Error Ocuured ' + err);
+      console.log("Error Ocuured " + err);
     } else {
-      console.log('Email Send Successfully' + info.response);
+      console.log("Email Send Successfully" + info.response);
     }
   });
 };
-
 
 module.exports = sendEmail;
