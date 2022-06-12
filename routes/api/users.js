@@ -128,6 +128,7 @@ router.put(
     let user = await User.findById(req.params.id);
     if (user) {
       user.photo = result.secure_url;
+      user.cloudinary_id = result.public_id;
       await user.save();
       return res.send(user);
     } else {
@@ -170,7 +171,10 @@ router.get("/:id", async (req, res) => {
 router.post("/register", upload.single("photo"), async (req, res) => {
   let user = await User.findOne({ email: req.body.email });
   if (user) return res.status(400).json("User with Given Email Already Exist ");
-  const result = await cloudinary.uploader.upload(req.file.path);
+  let result = "";
+  req.file
+    ? (result = await cloudinary.uploader.upload(req.file.path))
+    : (result = cloudinary.uploader.upload(""));
 
   user = new User();
   user.firstname = req.body.firstname;
@@ -184,6 +188,8 @@ router.post("/register", upload.single("photo"), async (req, res) => {
   let accessToken = user.generateToken(); //----->Genrate Token
   let datatoreturn = {
     accessToken: accessToken,
+    photo: user.photo,
+    cloudinary_id: user.cloudinary_id,
   };
   await user.save();
   res.status(200).json(datatoreturn);
