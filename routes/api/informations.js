@@ -15,40 +15,11 @@ cloudinary.config({
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
-// const storage = multer.diskStorage({
-//   destination: function (req, file, cb) {
-//     cb(null, "./images/");
-//   },
-//   filename: function (req, file, cb) {
-//     cb(null, file.originalname);
-//   },
-// });
-
-// const fileFilter = (req, file, cb) => {
-//   // reject a file
-//   if (file.mimetype === "image/jpeg" || file.mimetype === "image/png") {
-//     cb(null, true);
-//   } else {
-//     cb(null, false);
-//   }
-// };
-
-// const upload = multer({
-//   storage: storage,
-//   limits: {
-//     fileSize: 1024 * 1024 * 5,
-//   },
-//   fileFilter: fileFilter,
-// });
 
 const storage = multer.diskStorage({
-  // destination: (req, file, cb) => {
-  //   cb(null, './public');
-  // },
   filename: (req, file, cb) => {
     const fileName = file.originalname.toLowerCase().split(" ").join("-");
     cb(null, mongoose.Types.ObjectId() + "-" + fileName);
-    //cb(null, file.originalname);
   },
 });
 var upload = multer({
@@ -65,29 +36,6 @@ var upload = multer({
       return cb(new Error("Only .png, .jpg and .jpeg format allowed!"));
     }
   },
-});
-router.get("/stats", async (req, res) => {
-  const today = new Date();
-  const latYear = today.setFullYear(today.setFullYear() - 1);
-
-  try {
-    const data = await Information.aggregate([
-      {
-        $project: {
-          month: { $month: "$createdAt" },
-        },
-      },
-      {
-        $group: {
-          _id: "$month",
-          total: { $sum: 1 },
-        },
-      },
-    ]);
-    res.status(200).json(data);
-  } catch (err) {
-    res.status(500).json(err);
-  }
 });
 router.get("/get/totalprediction", async (req, res) => {
   try {
@@ -193,7 +141,7 @@ router.post("/", upload.array("photo", 10), async (req, res) => {
   information.cnic = req.body.cnic;
   information.address = req.body.address;
   information.amount = req.body.amount;
-
+  information.reason = req.body.reason;
   information.loanamount = req.body.loanamount;
   information.result = req.body.result;
   information.status = req.body.status;
@@ -202,12 +150,12 @@ router.post("/", upload.array("photo", 10), async (req, res) => {
   return res.send(information);
 });
 router.put("/updatestatus/:id", async (req, res) => {
-  console.log(req.params);
   let information = await Information.findOne({ _id: req.params.id });
 
   try {
     console.log(req.body);
     information.status = req.body.status || information.status;
+    information.reason = req.body.reason || information.reason;
     await information.save();
     return res.send(information);
   } catch (error) {

@@ -16,17 +16,15 @@ var userSchema = mongoose.Schema(
     cloudinary_id: {
       type: String,
     },
-    comments: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Comment",
-      },
-    ],
     role: String,
     resetPasswordToken: String,
     resetPasswordExpire: Date,
-    otp: String,
-    otpExpiry: Date,
+    verifyemailToken: String,
+    verifyemailExpire: Date,
+    verified: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );
@@ -64,6 +62,22 @@ userSchema.methods.getResetPasswordToken = function () {
   //Assign the resetpasswordToken Expire Time
   this.resetPasswordExpire = Date.now() + 15 * 60 * 1000;
   return resetToken;
+};
+
+//Generate the email verify Token
+userSchema.methods.getverifyemailToken = function () {
+  //Generate the Reset Token
+  const emailverifyToken = crypto.randomBytes(20).toString("hex");
+
+  //Hash the Above Reset Token add the verifyemailToken to user Schema
+  this.verifyemailToken = crypto
+    .createHash("sha256")
+    .update(emailverifyToken)
+    .digest("hex");
+
+  //Assign the emailverifyToken Expire Time
+  this.verifyemailExpire = Date.now() + 60 * 1000;
+  return emailverifyToken;
 };
 function validateUserReset(data) {
   const schema = Joi.object({

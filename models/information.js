@@ -36,6 +36,7 @@ var informationSchema = mongoose.Schema(
     loanamount: Number,
     status: String,
     userRole: String,
+    reason: String,
   },
   { timestamps: true }
 );
