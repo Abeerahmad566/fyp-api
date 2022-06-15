@@ -18,11 +18,75 @@ cloudinary.config({
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
+// const storage = multer.diskStorage({
+//   destination: function (req, file, cb) {
+//     cb(null, "./images/");
+//   },
+//   filename: function (req, file, cb) {
+//     cb(null, file.originalname);
+//   },
+// });
+
+// const fileFilter = (req, file, cb) => {
+//   // reject a file
+//   if (file.mimetype === "image/jpeg" || file.mimetype === "image/png") {
+//     cb(null, true);
+//   } else {
+//     cb(null, false);
+//   }
+// };
+
+// const upload = multer({
+//   storage: storage,
+//   limits: {
+//     fileSize: 1024 * 1024 * 5,
+//   },
+//   fileFilter: fileFilter,
+// });
+// router.get("/get/totalusers", async (req, res) => {
+//   try {
+//     var count = 0;
+//     let users = await User.find();
+//     const total = users.filter((user) => user.role === "user");
+//     count = total.length;
+
+//     return res.status(200).json(count);
+//   } catch (err) {
+//     return res.status(500).json("Internal Server Error");
+//   }
+// });
+// router.get("/stats", async (req, res) => {
+//   const today = new Date();
+//   const latYear = today.setFullYear(today.setFullYear() - 1);
+
+//   try {
+//     const data = await User.aggregate([
+//       {
+//         $project: {
+//           month: { $month: "$createdAt" },
+//         },
+//       },
+//       {
+//         $group: {
+//           _id: "$month",
+//           total: { $sum: 1 },
+//         },
+//       },
+//     ]);
+//     res.status(200).json(data);
+//   } catch (err) {
+//     res.status(500).json(err);
+//   }
+// });
 
 const storage = multer.diskStorage({
+  // destination: (req, file, cb) => {
+  //   cb(null, './public');
+  // },
   filename: (req, file, cb) => {
     const fileName = file.originalname.toLowerCase().split(" ").join("-");
     cb(null, mongoose.Types.ObjectId() + "-" + fileName);
+    //cb(null, file.originalname);
   },
 });
 var upload = multer({
@@ -223,7 +287,7 @@ router.post("/login", async (req, res) => {
     return res.status(400).send("User With given Email is not Registered");
   let isValid = await bcrypt.compare(req.body.password, user.password);
   if (!isValid) return res.status(401).send("Invalid Password");
-  if (!user.verified) return res.status(402).send("Please Verify Your Email");
+  // if (!user.verified) return res.status(402).send("Please Verify Your Email");
   let token = jwt.sign(
     {
       _id: user._id,
@@ -231,6 +295,7 @@ router.post("/login", async (req, res) => {
       lastname: user.lastname,
       email: user.email,
       role: user.role,
+      photo: user.photo,
     },
     config.get("jwtPrivateKey")
   );
@@ -312,4 +377,65 @@ router.put("/passwordreset/:resetToken", async (req, res) => {
   }
 });
 
+// router.post("/sendotp", async (req, res) => {
+//   const user = await User.findOne({ email: req.body.email });
+//   if (!user) return res.status(400).json("User Not Registered");
+//   else {
+//     //If user Exsist then send Otp to that user
+//     let OTP = Math.floor(Math.random() * 10000 + 1).toString();
+//     console.log(OTP);
+//     console.log(user._id);
+//     let newOtpExpiry = new Date(); // current time
+//     let nowMinutes = newOtpExpiry.getMinutes();
+//     newOtpExpiry.setMinutes(nowMinutes + 5);
+//     console.log(newOtpExpiry);
+//     await User.findByIdAndUpdate(user._id, {
+//       otp: OTP,
+//       otpExpiry: newOtpExpiry,
+//     });
+
+//     const message = `
+//       <h4>Hi,</h4>
+//       <p>You're recieving this email because we've recieved a password reset request from your account. If you didn't request a password reset, no further action is required.</p>
+//       <p>Your OTP is this:</p>
+//       <p>${OTP}</p>
+//     `;
+//     try {
+//       await sendEmail({
+//         to: user.email,
+//         subject: `Password Reset Request`,
+//         text: message,
+//       });
+//       res.status(200).json({
+//         message: `Email sent to ${user.email} successfully`,
+//       });
+//     } catch (error) {
+//       return res.status(500).json(" Email Could Not be  Send");
+//     }
+//   }
+// });
+// router.put("/resetpassword/:id", async (req, res) => {
+//   const user = await User.findById(req.params.id);
+//   console.log(user);
+//   if (user) {
+//     let nowTime = new Date();
+//     if (nowTime > user.otpExpiry) {
+//       if (req.body.otp == user.otp) {
+//         let salt = await bcrypt.genSalt(10);
+//         let resetPassword = await bcrypt.hash(req.body.password, salt);
+//         await User.findByIdAndUpdate(user._id, {
+//           password: resetPassword,
+//           otpExpiry: nowTime,
+//         });
+//         res.status(200).json("Password Reset Successfully");
+//       } else {
+//         res.status(400).json("OTP is Invalid");
+//       }
+//     } else {
+//       res.status(400).json("OTP is Expired");
+//     }
+//   } else {
+//     res.status(400).json("User Not Found");
+//   }
+// });
 module.exports = router;
