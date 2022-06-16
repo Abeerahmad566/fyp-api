@@ -23,6 +23,7 @@ const storage = multer.diskStorage({
     cb(null, file.originalname);
   },
 });
+<<<<<<< HEAD
 
 const fileFilter = (req, file, cb) => {
   // reject a file
@@ -41,6 +42,23 @@ const upload = multer({
   fileFilter: fileFilter,
 });
 
+=======
+var upload = multer({
+  storage: storage,
+  fileFilter: (req, file, cb) => {
+    if (
+      file.mimetype == "image/png" ||
+      file.mimetype == "image/jpg" ||
+      file.mimetype == "image/jpeg"
+    ) {
+      cb(null, true);
+    } else {
+      cb(null, false);
+      return cb(new Error("Only .png, .jpg and .jpeg format allowed!"));
+    }
+  },
+});
+>>>>>>> 3c084e918634989d77a6e5412f09264e2d4dc187
 router.get("/get/totalprediction", async (req, res) => {
   try {
     var count = 0;
