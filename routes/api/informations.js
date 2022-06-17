@@ -40,6 +40,26 @@ const upload = multer({
   },
   fileFilter: fileFilter,
 });
+router.get("/allpredictions", async (req, res) => {
+  try {
+    const allpredictions = await Information.aggregate([
+      {
+        $project: {
+          month: { $month: "$createdAt" },
+        },
+      },
+      {
+        $group: {
+          _id: "$month",
+          total: { $sum: 1 },
+        },
+      },
+    ]);
+    res.status(200).json(allpredictions);
+  } catch (err) {
+    res.status(500).json(err);
+  }
+});
 
 router.get("/get/totalprediction", async (req, res) => {
   try {
