@@ -12,65 +12,27 @@ const crypto = require("crypto");
 const sendEmail = require("./sendemail");
 const multer = require("multer");
 var dotenv = require("dotenv");
+const Token = require("../../models/token");
 dotenv.config();
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
-<<<<<<< HEAD
-=======
-// const storage = multer.diskStorage({
-//   destination: function (req, file, cb) {
-//     cb(null, "./images/");
-//   },
-//   filename: function (req, file, cb) {
-//     cb(null, file.originalname);
-//   },
-// });
 
-// const fileFilter = (req, file, cb) => {
-//   // reject a file
-//   if (file.mimetype === "image/jpeg" || file.mimetype === "image/png") {
-//     cb(null, true);
-//   } else {
-//     cb(null, false);
-//   }
-// };
-
-// const upload = multer({
-//   storage: storage,
-//   limits: {
-//     fileSize: 1024 * 1024 * 5,
-//   },
-//   fileFilter: fileFilter,
-// });
-// router.get("/get/totalusers", async (req, res) => {
-//   try {
-//     var count = 0;
-//     let users = await User.find();
-//     const total = users.filter((user) => user.role === "user");
-//     count = total.length;
-
-//     return res.status(200).json(count);
-//   } catch (err) {
-//     return res.status(500).json("Internal Server Error");
-//   }
-// });
-
->>>>>>> 3c084e918634989d77a6e5412f09264e2d4dc187
 const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, "./images/");
-  },
   filename: function (req, file, cb) {
-    cb(null, file.originalname);
+    cb(null, fileName + "-" + Date.now());
   },
 });
 
 const fileFilter = (req, file, cb) => {
   // reject a file
-  if (file.mimetype === "image/jpeg" || file.mimetype === "image/png") {
+  if (
+    file.mimetype === "image/jpeg" ||
+    file.mimetype === "image/png" ||
+    file.mimetype === "image/jpeg"
+  ) {
     cb(null, true);
   } else {
     cb(null, false);
@@ -163,31 +125,74 @@ router.post("/email", async (req, res) => {
   return res.send(user);
 });
 router.post("/register", upload.single("photo"), async (req, res) => {
-  let user = await User.findOne({ email: req.body.email });
-  if (user) return res.status(400).json("User with Given Email Already Exist ");
-  let result = "";
-  req.file
-    ? (result = await cloudinary.uploader.upload(req.file.path))
-    : (result = cloudinary.uploader.upload(""));
+  try {
+    let user = await User.findOne({ email: req.body.email });
+    if (user)
+      return res.status(400).json("User with Given Email Already Exist ");
+    let result = "";
+    req.file
+      ? (result = await cloudinary.uploader.upload(req.file.path))
+      : (result = cloudinary.uploader.upload(""));
 
-  user = new User();
-  user.firstname = req.body.firstname;
-  user.lastname = req.body.lastname;
-  user.email = req.body.email;
-  user.phonenumber = req.body.phonenumber;
-  user.password = req.body.password;
-  req.body.role ? (user.role = req.body.role) : (user.role = "user");
-  user.photo = result.secure_url;
-  user.cloudinary_id = result.public_id;
-  let accessToken = user.generateToken(); //----->Genrate Token
-  let datatoreturn = {
-    id: user._id,
-    accessToken: accessToken,
-    photo: user.photo,
-    cloudinary_id: user.cloudinary_id,
-  };
-  await user.save();
-  res.status(200).json(datatoreturn);
+    user = new User();
+    user.firstname = req.body.firstname;
+    user.lastname = req.body.lastname;
+    user.email = req.body.email;
+    user.phonenumber = req.body.phonenumber;
+    user.password = req.body.password;
+    req.body.role ? (user.role = req.body.role) : (user.role = "user");
+    user.photo = result.secure_url;
+    user.cloudinary_id = result.public_id;
+    let accessToken = user.generateToken(); //----->Genrate Token
+    let datatoreturn = {
+      id: user._id,
+      accessToken: accessToken,
+      photo: user.photo,
+      cloudinary_id: user.cloudinary_id,
+    };
+    await user.save();
+    const token = await new Token({
+      userId: user._id,
+      token: crypto.randomBytes(32).toString("hex"),
+    }).save();
+    const url = `${process.env.BASE_URL}${user.id}/emailverify/${token.token}`;
+    await sendEmail(user.email, "Verify Email", url);
+
+    res
+      .status(201)
+      .send({ message: "An Email sent to your account please verify" });
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({ message: "Internal Server Error" });
+  }
+});
+
+router.get("/:id/emailverify/:token", async (req, res) => {
+  console.log(req.params);
+  try {
+    const user = await User.findById(req.params.id);
+    console.log(user);
+    if (!user) return res.status(400).send({ message: "Invalid link" });
+    const token = await Token.findOne({
+      userId: user._id,
+      token: req.params.token,
+    });
+    if (!token)
+      return res.status(401).send({ message: "Email Already Verified" });
+
+    await User.findById(req.params.id);
+    if (user) {
+      user.verified = true;
+      await token.remove();
+      await user.save();
+      return res.status(200).json({ message: "Email verified successfully" });
+    } else {
+      res.status(404);
+      throw new Error("user not found");
+    }
+  } catch (error) {
+    res.status(500).send({ message: "Internal Server Error" });
+  }
 });
 
 router.post("/login", async (req, res) => {
@@ -196,7 +201,22 @@ router.post("/login", async (req, res) => {
     return res.status(400).send("User With given Email is not Registered");
   let isValid = await bcrypt.compare(req.body.password, user.password);
   if (!isValid) return res.status(401).send("Invalid Password");
-  if (!user.verified) return res.status(402).send("Please Verify Your Email");
+
+  if (!user.verified) {
+    let token = await Token.findOne({ userId: user._id });
+    if (!token) {
+      token = await new Token({
+        userId: user._id,
+        token: crypto.randomBytes(32).toString("hex"),
+      }).save();
+      const url = `${process.env.BASE_URL}${user._id}/emailverifylogin/${token.token}`;
+      await sendEmail(user.email, "Verify Email Login", url);
+    }
+    return res
+      .status(402)
+      .send({ message: "An Email sent to your account please verify" });
+  }
+
   let token = jwt.sign(
     {
       _id: user._id,
@@ -206,86 +226,68 @@ router.post("/login", async (req, res) => {
       role: user.role,
       photo: user.photo,
     },
-    config.get("jwtPrivateKey")
+    config.get("jwtPrivateKey"),
+    {
+      expiresIn: Date.now() + 3600,
+    }
   );
   res.send(token);
 });
 
-<<<<<<< HEAD
-=======
-//Forget Password
+///Forget Password
 router.post("/forgetpassword", async (req, res) => {
-  const user = await User.findOne({ email: req.body.email });
-
-  if (!user) {
-    return res.status(404).json("User Not Exist");
-  }
-
-  // Get ResetPassword Token
-  const resetToken = user.getResetPasswordToken();
-
-  await user.save();
-
-  const resetPasswordUrl = `http://localhost:3000/passwordreset/${resetToken}`;
-
-  const message = `
-     <h1>You have requested a password reset</h1>
-     <p>Please make a put request to the following link:</p>
-     <a href=${resetPasswordUrl} clicktracking=off>${resetPasswordUrl}</a>
-   `;
-
+  console.log(req.body);
   try {
-    await sendEmail({
-      to: user.email,
-      subject: `Loan Prediction Website Password Recovery`,
-      text: message,
-    });
+    let user = await User.findOne({ email: req.body.email });
+    if (!user)
+      return res
+        .status(402)
+        .send({ message: "User with given email does not exist!" });
 
-    res.status(200).json({
-      message: `Email sent to ${user.email} successfully`,
-    });
-  } catch (error) {
-    user.resetPasswordToken = undefined;
-    user.resetPasswordExpire = undefined;
-
-    await user.save();
-
-    return res.status(500).json(" Email Could Not be  Send");
-  }
-});
-
-//Reset Password Route
-
-router.put("/passwordreset/:resetToken", async (req, res) => {
-  //Hash the token which is provides in the url and generate the new token
-  const resetPasswordToken = crypto
-    .createHash("sha256")
-    .update(req.params.resetToken)
-    .digest("hex");
-
-  try {
-    const user = await User.findOne({
-      resetPasswordToken,
-      resetPasswordExpire: { $gt: Date.now() },
-    });
-
-    //Check that Token is Expired or not
-    if (!user) {
-      return res.status(400).json("Token is Expired or Invalid");
+    let token = await Token.findOne({ userId: user._id });
+    if (!token) {
+      token = await new Token({
+        userId: user._id,
+        token: crypto.randomBytes(32).toString("hex"),
+      }).save();
     }
-    user.password = req.body.password;
-    user.resetPasswordToken = undefined;
-    user.resetPasswordExpire = undefined;
 
-    await user.save();
-
-    res.status(201).json({
-      success: true,
-      data: "Password Updated Success",
-    });
+    const url = `${process.env.BASE_URL}newpassword/${user._id}/${token.token}`;
+    await sendEmail(
+      user.email,
+      `Loan Prediction Website Password Recovery`,
+      url
+    );
+    console.log(user.email);
+    res
+      .status(200)
+      .json({ message: "Password reset link sent to your email account" });
   } catch (error) {
-    console.log(error);
+    res.status(500).send({ message: "Internal Server Error" });
   }
 });
->>>>>>> 3c084e918634989d77a6e5412f09264e2d4dc187
+router.post("/newpassword/:id/:token", async (req, res) => {
+  console.log(req.body);
+  try {
+    const user = await User.findOne({ _id: req.params.id });
+    if (!user) return res.status(400).send({ message: "Invalid link" });
+
+    const token = await Token.findOne({
+      userId: user._id,
+      token: req.params.token,
+    });
+    if (!token) return res.status(400).send({ message: "Invalid link" });
+
+    if (!user.verified) user.verified = true;
+
+    user.password = req.body.password;
+    await user.save();
+    await token.remove();
+
+    res.status(200).send({ message: "Password reset successfully" });
+  } catch (error) {
+    res.status(500).send({ message: "Internal Server Error" });
+  }
+});
+
 module.exports = router;

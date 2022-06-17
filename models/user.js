@@ -26,8 +26,15 @@ var userSchema = mongoose.Schema(
   { timestamps: true }
 );
 
-//Hash the Password
-
+userSchema.methods.generateToken = function () {
+  return jwt.sign(
+    { _id: this._id, firstname: this.firstname },
+    process.env.JWT_KEY,
+    {
+      expiresIn: Date.now() + 3600,
+    }
+  );
+};
 userSchema.pre("save", async function (next) {
   if (!this.isModified("password")) {
     next();
