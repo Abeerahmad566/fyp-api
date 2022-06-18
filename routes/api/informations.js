@@ -16,29 +16,25 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 const storage = multer.diskStorage({
-  filename: function (req, file, cb) {
-    cb(null, file.originalname + "-" + Date.now());
+  filename: (req, file, cb) => {
+    const fileName = file.originalname.toLowerCase().split(" ").join("-");
+    cb(null, mongoose.Types.ObjectId() + "-" + fileName);
   },
 });
-
-const fileFilter = (req, file, cb) => {
-  if (
-    file.mimetype === "image/jpeg" ||
-    file.mimetype === "image/png" ||
-    file.mimetype === "image/jpeg"
-  ) {
-    cb(null, true);
-  } else {
-    cb(null, false);
-  }
-};
-
-const upload = multer({
+var upload = multer({
   storage: storage,
-  limits: {
-    fileSize: 1024 * 1024 * 5,
+  fileFilter: (req, file, cb) => {
+    if (
+      file.mimetype == "image/png" ||
+      file.mimetype == "image/jpg" ||
+      file.mimetype == "image/jpeg"
+    ) {
+      cb(null, true);
+    } else {
+      cb(null, false);
+      return cb(new Error("Only .png, .jpg and .jpeg format allowed!"));
+    }
   },
-  fileFilter: fileFilter,
 });
 router.get("/allpredictions", async (req, res) => {
   try {
