@@ -17,7 +17,7 @@ cloudinary.config({
 });
 const storage = multer.diskStorage({
   filename: function (req, file, cb) {
-    cb(null, fileName + "-" + Date.now());
+    cb(null, file.originalname + "-" + Date.now());
   },
 });
 
@@ -138,6 +138,7 @@ const cloudinaryImageUploadMethod = async (file) => {
 };
 
 router.post("/", upload.array("photo", 10), async (req, res) => {
+  console.log(req.body);
   let information = new Information();
   const urls = [];
   const files = req.files;

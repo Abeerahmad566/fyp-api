@@ -36,10 +36,7 @@ var informationSchema = mongoose.Schema(
     loanamount: Number,
     status: String,
     userRole: String,
-    reason: {
-      type: String,
-      default: "Predicted By Admin",
-    },
+    reason: String,
   },
   { timestamps: true }
 );
