@@ -10,13 +10,13 @@ var userSchema = mongoose.Schema(
     email: String,
     phonenumber: Number,
     password: String,
+    role: String,
     photo: {
       type: String,
     },
     cloudinary_id: {
       type: String,
     },
-    role: String,
 
     verified: {
       type: Boolean,
@@ -29,10 +29,7 @@ var userSchema = mongoose.Schema(
 userSchema.methods.generateToken = function () {
   return jwt.sign(
     { _id: this._id, firstname: this.firstname },
-    process.env.JWT_KEY,
-    {
-      expiresIn: Date.now() + 3600,
-    }
+    process.env.JWT_KEY
   );
 };
 userSchema.pre("save", async function (next) {

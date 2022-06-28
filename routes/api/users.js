@@ -22,7 +22,7 @@ cloudinary.config({
 
 const storage = multer.diskStorage({
   filename: function (req, file, cb) {
-    cb(null, fileName + "-" + Date.now());
+    cb(null, file + "-" + Date.now());
   },
 });
 
@@ -47,15 +47,21 @@ const upload = multer({
   fileFilter: fileFilter,
 });
 
-router.get("/:id", async (req, res) => {
+router.get("/getsingle/:id", async (req, res) => {
   let user = await User.findById(req.params.id);
   return res.send(user);
 });
-router.get("/users", async (req, res) => {
-  let users = await User.find({ role: "user" });
-  return res.send(users);
+router.get("/getusers", async (req, res) => {
+  console.log(req.params);
+  try {
+    let users = await User.find({ role: "user" });
+    return res.send(users);
+  } catch (error) {
+    console.log(error);
+    return res.send(error);
+  }
 });
-router.get("/admins", async (req, res) => {
+router.get("/getadmins", async (req, res) => {
   let users = await User.find({ role: "admin" });
   return res.send(users);
 });
@@ -120,10 +126,7 @@ router.get("/:id", async (req, res) => {
   let users = await User.find({ _id: req.params.id });
   return res.send(users);
 });
-router.post("/email", async (req, res) => {
-  let user = await User.findOne({ email: req.params.email });
-  return res.send(user);
-});
+
 router.post("/register", upload.single("photo"), async (req, res) => {
   try {
     let user = await User.findOne({ email: req.body.email });
@@ -267,7 +270,6 @@ router.post("/forgetpassword", async (req, res) => {
   }
 });
 router.post("/newpassword/:id/:token", async (req, res) => {
-  console.log(req.body);
   try {
     const user = await User.findOne({ _id: req.params.id });
     if (!user) return res.status(400).send({ message: "Invalid link" });

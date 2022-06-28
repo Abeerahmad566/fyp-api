@@ -16,9 +16,8 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 const storage = multer.diskStorage({
-  filename: (req, file, cb) => {
-    const fileName = file.originalname.toLowerCase().split(" ").join("-");
-    cb(null, mongoose.Types.ObjectId() + "-" + fileName);
+  filename: function (req, file, cb) {
+    cb(null, file + "-" + Date.now());
   },
 });
 var upload = multer({
