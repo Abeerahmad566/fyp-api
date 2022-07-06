@@ -116,7 +116,6 @@ router.get("/", async (req, res) => {
 router.get("/:id", async (req, res) => {
   let informations = await Information.find({
     userid: req.params.id,
-    result: "Approved" || "Rejected",
   });
   if (informations) return res.send(informations);
   else res.send("No info");
