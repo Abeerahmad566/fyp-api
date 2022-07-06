@@ -37,6 +37,7 @@ var informationSchema = mongoose.Schema(
     status: String,
     userRole: String,
     reason: String,
+    tenure: String,
   },
   { timestamps: true }
 );

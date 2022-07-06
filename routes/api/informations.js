@@ -92,6 +92,18 @@ router.get("/get/totalRejected", async (req, res) => {
     return res.status(500).json("Internal Server Error");
   }
 });
+router.get("/get/totalpendingloans", async (req, res) => {
+  try {
+    var count = 0;
+    let informations = await Information.find({ status: "Pending" });
+    const total = informations;
+    count = total.length;
+
+    return res.status(200).json(count);
+  } catch (err) {
+    return res.status(500).json("Internal Server Error");
+  }
+});
 router.get("/pendingloandata", async (req, res) => {
   let informations = await Information.find({ status: "Pending" });
   return res.send(informations);
@@ -168,6 +180,7 @@ router.post("/", upload.array("photo", 10), async (req, res) => {
   information.result = req.body.result;
   information.status = req.body.status;
   information.userRole = req.body.userRole;
+  information.tenure = req.body.tenure;
   await information.save();
   return res.send(information);
 });
