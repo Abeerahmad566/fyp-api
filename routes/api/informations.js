@@ -171,7 +171,7 @@ router.post("/", upload.array("photo", 10), async (req, res) => {
   information.Houseownership = req.body.Houseownership;
   information.cnic = req.body.cnic;
   information.address = req.body.address;
-  req.body.result = "Rejected"
+  req.body.result == "Rejected"
     ? (information.reason = "Rejected by System ")
     : (information.reason = req.body.reason);
   information.designation = req.body.designation;
